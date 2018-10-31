@@ -1,0 +1,148 @@
+# FUNCTIONS
+
+compress_pigz() {
+    tar -I pigz -cvf $1.tar.gz $1
+}
+
+decompress_pigz() {
+    tar -I pigz -xvf $1
+}
+
+update_git_mybashrc() {
+    git -C $HOME/.mybashrc pull
+    source $HOME/.bashrc
+}
+
+EE_MYSQL_OPTIMIZATION() {
+    if [ -f $HOME/.my.cnf ]; then
+        mysqlcheck -Aos --auto-repair
+    fi
+}
+
+encrypt_gpg() {
+    gpg -c $1
+}
+
+decrypt_gpg() {
+    gpg --output ${1%.gpg} -d $1
+}
+
+MAINTENANCE_APT() {
+
+    # Colors
+    # Colors
+    CSI='\033['
+    CEND="${CSI}0m"
+    CRED="${CSI}1;31m"
+    CGREEN="${CSI}1;32m"
+
+    echo -e "${CGREEN}#############################################${CEND}"
+    echo -e '       APT UPDATE               '
+    echo -e "${CGREEN}#############################################${CEND}"
+    sudo apt update
+    echo -e "${CGREEN}#############################################${CEND}"
+    echo -e '       APT FULL-UPGRADE               '
+    echo -e "${CGREEN}#############################################${CEND}"
+    sudo apt full-upgrade -y
+    echo -e "${CGREEN}#############################################${CEND}"
+    echo -e '       APT-GET AUTOREMOVE              '
+    echo -e "${CGREEN}#############################################${CEND}"
+    sudo apt-get -y --purge autoremove
+    echo -e "${CGREEN}#############################################${CEND}"
+    echo -e '       APT AUTOCLEAN               '
+    echo -e "${CGREEN}#############################################${CEND}"
+    sudo apt-get -y autoclean
+    sudo apt-get -y clean
+    ## clean packages in deinstall state
+    DEINSTALLED=$(sudo dpkg --get-selections | grep deinstall | cut -f1)
+    if [ ! -z "$DEINSTALLED" ]; then
+        echo -e "${CGREEN}#############################################${CEND}"
+        echo -e '       CLEAN DEINSTALL PACKAGES               '
+        echo -e "${CGREEN}#############################################${CEND}"
+        sudo dpkg --get-selections | grep deinstall | cut -f1 | xargs dpkg --purge
+    fi
+    if [ -x /usr/bin/docker ]; then
+        echo -e "${CGREEN}#############################################${CEND}"
+        echo -e '       DOCKER CLEANUP               '
+        echo -e "${CGREEN}#############################################${CEND}"
+        list_images=$(docker images --filter "dangling=true" -q --no-trunc)
+        list_volumes=$(docker volume ls -qf dangling=true)
+        if [ ! -z "$list_images" ]; then
+            docker rmi $list_images
+        fi
+        if [ ! -z "$list_volumes" ]; then
+            docker volume rm $list_volumes
+        fi
+    fi
+    echo -e "${CGREEN}#############################################${CEND}"
+    echo -e '       EE-BASHRC UPDATE               '
+    echo -e "${CGREEN}#############################################${CEND}"
+    update_git_mybashrc
+
+}
+
+EE_NGINX_COMPILE() {
+    if [ ! -d $HOME/.ee ]; then
+        mkdir $HOME/.ee
+    fi
+    wget -qO $HOME/.ee/nginx-build.sh https://raw.githubusercontent.com/VirtuBox/nginx-ee/master/nginx-build.sh
+    chmod +x $HOME/.ee/nginx-build.sh
+    $HOME/.ee/nginx-build.sh $@
+}
+
+EE_SHOW_LOG() {
+
+    tail -n 500 $1 | ccze -A
+
+}
+
+EE_SHOW_FPM() {
+
+top -bn1 | grep php-fpm | wc -l
+
+}
+
+alias transfer=transfer_vtbox_net
+
+alias cheat='cht.sh'
+
+alias wp='wp --allow-root'
+
+alias gzip=compress_pigz
+alias gunzip=decompress_pigz
+
+alias ee-bashrc-update=update_git_mybashrc
+
+alias rsync='rsync -avz --human-readable --progress'
+alias rsync_hard='rsync -rLptgoD --human-readable --progress'
+
+alias ee-syslog='tail -n 250 /var/log/syslog | ccze -A'
+
+alias ee-nginx-compile=EE_NGINX_COMPILE
+
+alias ee-mysql-optimize=EE_MYSQL_OPTIMIZATION
+alias tar='tar -I pigz'
+alias showlog=EE_SHOW_LOG
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# some more ls aliases
+alias ll='ls -alhF'
+alias la='ls -A'
+alias l='ls -CF'
+alias lh="stat -c '%A %a %n'"
+alias maintenance=MAINTENANCE_APT
+alias ee-maintenance=MAINTENANCE_APT
+alias ee-encrypt=encrypt_gpg
+alias ee-decrypt=decrypt_gpg
+alias show-fpm-process=EE_SHOW_FPM
