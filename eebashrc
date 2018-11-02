@@ -1,22 +1,20 @@
 # FUNCTIONS
 
-compress_pigz() {
-    tar -I pigz -cvf $1.tar.gz $1
-}
-
-decompress_pigz() {
-    tar -I pigz -xvf $1
-}
-
 update_git_mybashrc() {
     git -C $HOME/.mybashrc pull
     source $HOME/.bashrc
 }
 
 EE_MYSQL_OPTIMIZATION() {
+if [ -d /etc/psa ]; then
+MYSQL_PWD=$(cat /etc/psa/.psa.shadow) mysqlcheck -Aos -uadmin --auto-repair
+else
     if [ -f $HOME/.my.cnf ]; then
         mysqlcheck -Aos --auto-repair
+    else
+    echo "mysql root credentials need to be stored in $HOME/.my.cnf"
     fi
+fi    
 }
 
 encrypt_gpg() {
@@ -102,20 +100,19 @@ top -bn1 | grep php-fpm | wc -l
 
 }
 
-alias transfer=transfer_vtbox_net
-
+# alias cht.sh 
 alias cheat='cht.sh'
 
+# override wp with --allow-root argument
 alias wp='wp --allow-root'
-
-alias gzip=compress_pigz
-alias gunzip=decompress_pigz
 
 alias ee-bashrc-update=update_git_mybashrc
 
+# override rsync with backup arguments
 alias rsync='rsync -avz --human-readable --progress'
 alias rsync_hard='rsync -rLptgoD --human-readable --progress'
 
+# display last 250 lines of syslog with color 
 alias ee-syslog='tail -n 250 /var/log/syslog | ccze -A'
 
 alias ee-nginx-compile=EE_NGINX_COMPILE
@@ -146,3 +143,5 @@ alias ee-maintenance=MAINTENANCE_APT
 alias ee-encrypt=encrypt_gpg
 alias ee-decrypt=decrypt_gpg
 alias show-fpm-process=EE_SHOW_FPM
+alias ddos-detect='netstat -atun | awk '{print $5}' | cut -d: -f1 | sed -e '/^$/d' |sort | uniq -c | sort -n'
+
