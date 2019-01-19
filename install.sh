@@ -19,12 +19,13 @@
     }
 }
 
-
 if [ ! -d $HOME/.wo-bashrc ]; then
-        git clone https://github.com/VirtuBox/wo-bashrc.git $HOME/.wo-bashrc
+    git clone https://github.com/VirtuBox/wo-bashrc.git $HOME/.wo-bashrc
+    chmod +x $HOME/.wo-bashrc/bin/wo-bashrc
+    cp $HOME/.wo-bashrc/wo-bashrc.rc /etc/bash_completion.d/wo-bashrc.rc
 else
     git -C $HOME/.wo-bashrc pull origin master
-
+    cp $HOME/.wo-bashrc/wo-bashrc.rc /etc/bash_completion.d/wo-bashrc.rc
 fi
 if [ -f $HOME/.bashrc ]; then
     check_wobashrc=$(grep "wo-bashrc" $HOME/.bashrc)

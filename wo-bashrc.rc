@@ -14,8 +14,30 @@ _wobashrc_complete()
                 -W "--nginx-ee --maintenance --syslog --showlog --netdata --docker --mysqltuner --mysqlcheck --cronjob --password --speedtest --sysinfo --foldersize --gpigz --gunpigz --transfer --wobashrc-update" \
         -- $cur) )
 
-    fi
+     elif [ $COMP_CWORD -eq 2 ]; then
+        case "$prev" in
+            "--gpigz")
+            _filedir
+            return 0
+                ;;
+            "--gunpigz")
+            _filedir
+            return 0
+                ;;
+            "--transfer")
+            _filedir
+            return 0
+                ;;
+            "--showlog")
+            _filedir
+            return 0
+                ;;
+
+            *)
+                ;;
+        esac
     return 0
+fi
 } &&
 complete -F _wobashrc_complete wo-bashrc
 
