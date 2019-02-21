@@ -1,4 +1,4 @@
-_wobashrc_complete()
+_vbash_complete()
 {
     local cur prev BASE_LEVEL
 
@@ -8,7 +8,7 @@ _wobashrc_complete()
     mprev=${COMP_WORDS[COMP_CWORD-2]}
 
 
-    # SETUP THE BASE LEVEL (everything after "wo-bashrc")
+    # SETUP THE BASE LEVEL (everything after "vbash")
     if [ $COMP_CWORD -eq 1 ]; then
         COMPREPLY=( $(compgen \
                 -W "--nginx-ee --maintenance --syslog --showlog --netdata --docker --mysqltuner --mysqlcheck --cronjob --password --speedtest --sysinfo --foldersize --gpigz --gunpigz --transfer --wobashrc-update" \
@@ -39,6 +39,6 @@ _wobashrc_complete()
     return 0
 fi
 } &&
-complete -F _wobashrc_complete wo-bashrc
+complete -F _vbash_complete vbash
 
 

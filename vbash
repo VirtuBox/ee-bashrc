@@ -1,14 +1,6 @@
 # alias cht.sh
 alias cheat='cht.sh'
 
-# override wp with --allow-root argument
-alias wp='wp --allow-root'
-
-# override rsync with backup arguments
-alias rsync='rsync -avz --human-readable --progress'
-alias rsync_hard='rsync -rLptgoD --human-readable --progress'
-
-
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
@@ -26,4 +18,4 @@ alias ll='ls -alhF'
 alias la='ls -A'
 alias l='ls -CF'
 alias lh="stat -c '%A %a %n'"
-alias wo-bashrc="$HOME/.wo-bashrc/bin/wo-bashrc"
+alias vbash='~/.vbashrc/bin/vbash'

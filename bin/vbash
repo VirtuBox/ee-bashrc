@@ -1,18 +1,31 @@
 #!/bin/bash
 #----------------------------------------------------------------------------
-# wo-bashrc -  bashrc functions and alias
+# vbashrc -  bashrc functions and aliases
 #----------------------------------------------------------------------------
 # Website:       https://virtubox.net
-# GitHub:        https://github.com/VirtuBox/ee-acme-sh
+# GitHub:        https://github.com/VirtuBox/vbashrc
 # Copyright (c) 2018 VirtuBox <contact@virtubox.net>
 # This script is licensed under M.I.T
 #---------------------------------------------------------------------------
-# Version 0.1 - 2019-19-01
+# Version 1.0 - 2019-19-21
 # --------------------------------------------------------------------------
 
-[ ! -d $HOME/.wo-scripts ] && {
-    mkdir -p $HOME/.wo-scripts
-}
+# SUDO check
+if [ "$(id -u)" != "0" ]; then
+SUDO_CHECK="$(groups | grep sudo)"
+if [ -z "$SUDO_CHECK" ]; then
+    SUDO=""
+    ELEVATION=0
+else
+    SUDO="sudo"
+    ELEVATION=1
+fi
+else
+    SUDO=""
+    ELEVATION=1
+fi
+
+
 
 ##################################
 # functions
@@ -21,9 +34,9 @@
 # Nginx-ee compilation
 
 _NGINX_EE() {
-    wget -O $HOME/.wo-scripts/nginx-build.sh https://raw.githubusercontent.com/VirtuBox/nginx-ee/master/nginx-build.sh
-    chmod +x $HOME/.wo-scripts/nginx-build.sh
-    $HOME/.wo-scripts/nginx-build.sh --mainline
+    wget -O $HOME/.vbashrc/scripts/nginx-build.sh https://raw.githubusercontent.com/VirtuBox/nginx-ee/master/nginx-build.sh
+    chmod +x $HOME/.vbashrc/scripts/nginx-build.sh
+    $SUDO $HOME/.vbashrc/scripts/nginx-build.sh
 }
 
 _MAINTENANCE() {
@@ -37,96 +50,87 @@ _MAINTENANCE() {
     echo -e "${CGREEN}#############################################${CEND}"
     echo -e '       APT UPDATE               '
     echo -e "${CGREEN}#############################################${CEND}"
-    sudo apt update
+    $SUDO apt-get update
     echo -e "${CGREEN}#############################################${CEND}"
     echo -e '       APT FULL-UPGRADE               '
     echo -e "${CGREEN}#############################################${CEND}"
-    sudo apt full-upgrade -y
+    $SUDO apt-get dist-upgrade -y
     echo -e "${CGREEN}#############################################${CEND}"
     echo -e '       APT-GET AUTOREMOVE              '
     echo -e "${CGREEN}#############################################${CEND}"
-    sudo apt-get -y --purge autoremove
+    $SUDO apt-get -y --purge autoremove
     echo -e "${CGREEN}#############################################${CEND}"
     echo -e '       APT AUTOCLEAN               '
     echo -e "${CGREEN}#############################################${CEND}"
-    sudo apt-get -y autoclean
-    sudo apt-get -y clean
+    $SUDO apt-get -y autoclean
+    $SUDO apt-get -y clean
     ## clean packages in deinstall state
-    DEINSTALLED=$(sudo dpkg --get-selections | grep deinstall | cut -f1)
-    if [ ! -z "$DEINSTALLED" ]; then
+    DEINSTALLED=$($SUDO dpkg --get-selections | grep deinstall | cut -f1)
+    if [ -n "$DEINSTALLED" ]; then
         echo -e "${CGREEN}#############################################${CEND}"
         echo -e '       CLEAN DEINSTALL PACKAGES               '
         echo -e "${CGREEN}#############################################${CEND}"
-        sudo dpkg --get-selections | grep deinstall | cut -f1 | xargs dpkg --purge
+        $SUDO dpkg --get-selections | grep deinstall | cut -f1 | xargs dpkg --purge
     fi
-    if [ -x /usr/bin/docker ]; then
+    if [ -n "$(command -v docker)" ]; then
         echo -e "${CGREEN}#############################################${CEND}"
         echo -e '       DOCKER CLEANUP               '
         echo -e "${CGREEN}#############################################${CEND}"
         list_images=$(docker images --filter "dangling=true" -q --no-trunc)
         list_volumes=$(docker volume ls -qf dangling=true)
-        if [ ! -z "$list_images" ]; then
+        if [ -n "$list_images" ]; then
             docker rmi "$list_images"
         fi
-        if [ ! -z "$list_volumes" ]; then
+        if [ -n "$list_volumes" ]; then
             docker volume rm "$list_volumes"
         fi
     fi
-    OLD_LOGS=$(sudo find /var/log/ -type f -mtime +30 -iname "*.gz")
-    if [ ! -z "$OLD_LOGS" ]; then
+    OLD_LOGS=$($SUDO find /var/log/ -type f -mtime +30 -iname "*.gz")
+    if [ -n "$OLD_LOGS" ]; then
         echo -e "${CGREEN}#############################################${CEND}"
         echo -e '       CLEANUP OLD LOGS               '
         echo -e "${CGREEN}#############################################${CEND}"
-        sudo find /var/log/ -type f -mtime +30 -iname "*.gz" -exec rm '{}' \;
+        $SUDO find /var/log/ -type f -mtime +30 -iname "*.gz" -exec rm '{}' \;
     fi
     echo -e "${CGREEN}#############################################${CEND}"
     echo -e '       WO-BASHRC UPDATE               '
     echo -e "${CGREEN}#############################################${CEND}"
-    update_git_mybashrc
+    update_git_vbashrc
 
 }
 
 _syslog() {
-    if [ "$(id -u)" != "0" ]; then
-        tail -n 250 /var/log/syslog | ccze -A
-    else
-        sudo tail -n 250 /var/log/syslog | ccze -A
-    fi
+    [ -z "$(command -v ccze)" ] && { apt-get install ccze -y > /dev/null 2>&1; }
+    $SUDO tail -n 250 /var/log/syslog | ccze -A
 }
 
 _docker() {
-    curl -fsSL get.docker.com -o $HOME/.wo-scripts/get-docker.sh
-    chmod +x $HOME/.wo-scripts/get-docker.sh
-    $HOME/.wo-scripts/get-docker.sh
+    [ -z "$(command -v docker)" ] && {
+    curl -fsSL get.docker.com -o $HOME/.vbashrc/scripts/get-docker.sh
+    chmod +x $HOME/.vbashrc/scripts/get-docker.sh
+    $HOME/.vbashrc/scripts/get-docker.sh
+    }
 }
 
 _mysqltuner() {
-    if [ ! -d $HOME/.wo-scripts ]; then
-        mkdir -p $HOME/.wo-scripts
-    fi
-    wget -O $HOME/.wo-scripts/mysqltuner.pl https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl
-    chmod +x $HOME/.wo-scripts/mysqltuner.pl
-    $HOME/.wo-scripts/mysqltuner.pl
+    wget -O $HOME/.vbashrc/scripts/mysqltuner.pl https://raw.githubusercontent.com/major/MySQLTuner-perl/master/mysqltuner.pl
+    chmod +x $HOME/.vbashrc/scripts/mysqltuner.pl
+    $HOME/.vbashrc/scripts/mysqltuner.pl
 }
 
 _mysqlcheck() {
     if [ -d /etc/psa ]; then
-        MYSQL_PWD=$(cat /etc/psa/.psa.shadow) mysqlcheck -Aos -uadmin --auto-repair
+        MYSQL_PWD=$($SUDO cat /etc/psa/.psa.shadow) mysqlcheck -Aos -uadmin --auto-repair
     else
         mysqlcheck -Aos --auto-repair
     fi
 }
 
 _cronjob() {
-    if [ "$(id -u)" != "0" ]; then
-        cat /var/spool/cron/crontabs/*
-    else
-        sudo cat /var/spool/cron/crontabs/*
-    fi
+    $SUDO cat /var/spool/cron/crontabs/*
 }
 
 _password() {
-
     pass=$(date +%s | sha256sum | base64 | head -c 32)
     echo ""
     echo "Password : $pass"
@@ -134,9 +138,9 @@ _password() {
 }
 
 _speedtest() {
-    wget -O $HOME/.wo-scripts/speedtest-cli https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py
-    chmod +x $HOME/.wo-scripts/speedtest-cli
-    $HOME/.wo-scripts/speedtest-cli --share
+    wget -O $HOME/.vbashrc/scripts/speedtest-cli https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py
+    chmod +x $HOME/.vbashrc/scripts/speedtest-cli
+    $HOME/.vbashrc/scripts/speedtest-cli --share
 }
 
 _sysinfo() {
@@ -190,18 +194,26 @@ _compress_pigz() {
 }
 
 _decompress_pigz() {
-     /bin/tar -I pigz -xvf "$1"
+    /bin/tar -I pigz -xvf "$1"
 }
 
-_wo_showlog() {
-
-    tail -n 500 "$1" | ccze -A
+_vb_showlog() {
+    [ -z "$(command -v ccze)" ] && { apt-get install ccze -y > /dev/null 2>&1; }
+    $SUDO tail -n 500 "$1" | ccze -A
 
 }
+
+_disk_benchmark() {
+    [ -f ./file_1GB ] && { rm -f file_1GB; }
+    dd if=/dev/zero bs=1024 count=1000000 of=file_1GB
+    dd if=file_1GB of=/dev/null bs=1024
+    rm file_1GB
+}
+
 
 _help() {
     echo "Command-Line tool for Debian/Ubuntu Servers"
-    echo "Usage: wo-bashrc <option>"
+    echo "Usage: vbash <command>"
     echo "  Commands:"
     echo "       --nginx-ee ... compile the latest nginx mainline release with nginx-ee bash script"
     echo "       --maintenance ... run apt-get update, apt-get upgrade, apt-get autoclean etc.."
@@ -219,82 +231,81 @@ _help() {
     echo "       --gpigz <file/folder name> ... compress a file or a folder with tar and multithreaded gzip"
     echo "       --gunpigz <archive> ... decompress a tar.gz archive with pigz"
     echo "       --transfer <file> ... transfer a file from the command line with transfer.sh"
-    echo "       --wobashrc-update ... update wo-bashrc"
+    echo "       --vbashrc-update ... update vbashrc"
     echo "       -h, --help, help ... displays this help information"
     echo ""
     return 0
 }
 
-if [ "${#}" = "0" ]; then
+if [ "$#" = "0" ]; then
     _help
     exit 1
 else
-    while [ ${#} -gt 0 ]; do
-        case "${1}" in
-        "--nginx-ee")
-            _NGINX_EE
-            exit 1
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            --nginx-ee)
+                _NGINX_EE
+                exit 0
             ;;
-        "--maintenance")
-            _MAINTENANCE
-            exit 1
+           --maintenance)
+                _MAINTENANCE
+                exit 0
             ;;
-        "--syslog")
-            _syslog
-            exit 1
+            --syslog)
+                _syslog
+                exit 0
             ;;
-        "--showlog")
-            _wo_showlog "$2"
-            exit 1
-            shift
+            --showlog)
+                _wo_showlog "$2"
+                exit 0
+                shift
             ;;
-        "--netdata")
-            _netdata
-            exit 1
+            --netdata)
+                _netdata
+                exit 0
             ;;
-        "--docker")
-            _docker
-            exit 1
+            --docker)
+                _docker
+                exit 0
             ;;
-        "--mysqltuner")
-            _mysqltuner
-            exit 1
+            --mysqltuner)
+                _mysqltuner
+                exit 0
             ;;
-        "--mysqlcheck")
-            _mysqlcheck
-            exit 1
+            --mysqlcheck)
+                _mysqlcheck
+                exit 0
             ;;
-        "--cronjob")
-            _cronjob
-            exit 1
+            --cronjob)
+                _cronjob
+                exit 0
             ;;
-        "--password")
-            _password
-            exit 1
+            --password)
+                _password
+                exit 0
             ;;
-        "--speedtest")
-            _speedtest
-            exit 1
+            --speedtest)
+                _speedtest
+                exit 0
             ;;
-        "--sysinfo")
-            _sysinfo
-            exit 1
+            --sysinfo)
+                _sysinfo
+                exit 0
             ;;
-        "--foldersize")
-            _foldersize
-            exit 1
+            --foldersize)
+                _foldersize
+                exit 0
             ;;
-        "--transfer")
-            _transfer_sh "$2"
-            exit 1
-            shift
+            --transfer)
+                _transfer_sh "$2"
+                exit 0
+                shift
             ;;
-
-        "-h" | "--help" | "help")
-            _help
-            exit 1
+            "-h" | "--help" | "help")
+                _help
+                exit 1
             ;;
-        *) ;;
+            *) ;;
         esac
         shift
     done

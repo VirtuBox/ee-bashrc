@@ -2,38 +2,38 @@
 
 [ "$(id -u)" = "0" ] && {
 
-    [ ! -x /usr/bin/sudo ] && {
-        apt update && apt install sudo -y
+    [ -z "$(command -v sudo)" ] && {
+        apt-get update && apt-get install sudo -y
     }
-    [ ! -x /usr/bin/git ] && {
-        sudo apt update && apt install -y git
+    [ -z "$(command -v git)" ] && {
+        apt-get update && apt-get install -y git
     }
 
     [ ! -d $HOME/.ssh ] && {
         mkdir $HOME/.ssh
     }
 
-    [ ! -x /usr/bin/cht.sh ] && {
+    [ -z "$(command -v cht.sh)" ] && {
         sudo curl https://cht.sh/:cht.sh >/usr/bin/cht.sh || sudo wget -O /usr/bin/cht.sh https://cht.sh/:cht.sh
         sudo chmod +x /usr/bin/cht.sh
     }
 }
 
-if [ ! -d $HOME/.wo-bashrc ]; then
-    git clone https://github.com/VirtuBox/wo-bashrc.git $HOME/.wo-bashrc
-    chmod +x $HOME/.wo-bashrc/bin/wo-bashrc
-    cp $HOME/.wo-bashrc/wo-bashrc.rc /etc/bash_completion.d/wo-bashrc.rc
+if [ ! -d $HOME/.vbashrc ]; then
+    git clone https://github.com/VirtuBox/vbashrc.git $HOME/.vbashrc
+    chmod +x $HOME/.vbashrc/bin/vbash
+    cp $HOME/.vbashrc/vbash.rc /etc/bash_completion.d/vbash.rc
 else
-    git -C $HOME/.wo-bashrc pull origin master
-    cp $HOME/.wo-bashrc/wo-bashrc.rc /etc/bash_completion.d/wo-bashrc.rc
+    git -C $HOME/.vbashrc pull origin master
+    cp $HOME/.vbashrc/vbash.rc /etc/bash_completion.d/vbash.rc
 fi
 if [ -f $HOME/.bashrc ]; then
-    check_wobashrc=$(grep "wo-bashrc" $HOME/.bashrc)
-    [ -z "$check_wobashrc" ] && {
-        echo ". $HOME/.wo-bashrc/wo-bashrc" >>$HOME/.bashrc
+    check_vbashrc=$(grep "vbash" $HOME/.bashrc)
+    [ -z "$check_vbashrc" ] && {
+        echo ". $HOME/.vbashrc/vbash" >>$HOME/.bashrc
     }
 else
-    wget -O $HOME/.profile https://raw.githubusercontent.com/VirtuBox/ubuntu-nginx-web-server/master/docs/files/var/www/.profile
-    wget -O $HOME/.bashrc https://raw.githubusercontent.com/VirtuBox/ubuntu-nginx-web-server/master/docs/files/var/www/.bashrc
-    echo ". $HOME/.wo-bashrc/wo-bashrc" >>$HOME/.bashrc
+    wget -O $HOME/.profile https://raw.githubusercontent.com/VirtuBox/ubuntu-nginx-web-server/master/var/www/.profile
+    wget -O $HOME/.bashrc https://raw.githubusercontent.com/VirtuBox/ubuntu-nginx-web-server/master/var/www/.bashrc
+    echo ". $HOME/.vbashrc/vbash" >>$HOME/.bashrc
 fi
