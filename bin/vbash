@@ -39,6 +39,10 @@ _NGINX_EE() {
     $SUDO $HOME/.vbashrc/scripts/nginx-build.sh
 }
 
+ _update_git_vbashrc() {
+     git -C $HOME/.vbashrc pull origin master
+ }
+
 _MAINTENANCE() {
 
     # Colors
@@ -95,13 +99,13 @@ _MAINTENANCE() {
     echo -e "${CGREEN}#############################################${CEND}"
     echo -e '       WO-BASHRC UPDATE               '
     echo -e "${CGREEN}#############################################${CEND}"
-    update_git_vbashrc
+    _update_git_vbashrc
 
 }
 
 _syslog() {
     [ -z "$(command -v ccze)" ] && { apt-get install ccze -y > /dev/null 2>&1; }
-    $SUDO tail -n 250 /var/log/syslog | ccze -A
+    $SUDO tail -n 250 /var/log/syslog | ccze -A --plugin=syslog
 }
 
 _docker() {
